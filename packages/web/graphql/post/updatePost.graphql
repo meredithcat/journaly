@@ -2,6 +2,7 @@ mutation updatePost(
   $postId: Int!
   $title: String
   $languageId: Int
+  $level: LanguageLevel!
   $topicIds: [Int!]
   $body: [EditorNode!]
   $status: PostStatus
@@ -12,6 +13,7 @@ mutation updatePost(
     body: $body
     title: $title
     languageId: $languageId
+    level: $level
     status: $status
     headlineImage: $headlineImage
     topicIds: $topicIds

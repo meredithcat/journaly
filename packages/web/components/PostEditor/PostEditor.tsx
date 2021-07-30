@@ -14,14 +14,16 @@ import useAutosavedState from '@/hooks/useAutosavedState'
 import {
   CurrentUserFragmentFragment as UserType,
   TopicFragmentFragment as TopicType,
+  LanguageFragmentFragment as LanguageType,
   PostStatus as PostStatusType,
+  LanguageLevel,
 } from '@/generated/graphql'
 import { languageNameWithDialect } from '@/utils/languages'
 import { useTranslation } from '@/config/i18n'
 
 type BasePostData = {
   title: string
-  languageId: number
+  language: LanguageType
   topicIds: number[]
   headlineImage: {
     smallSize: string
@@ -58,7 +60,7 @@ const validatePostData: validatePostDataSignature = (data, t) => {
     return [false, t('emptyTitleError')]
   }
 
-  if (data.languageId === -1) {
+  if (data.language.id === -1) {
     return [false, t('noLanguageError')]
   }
 
@@ -76,7 +78,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
   const { t } = useTranslation('post')
   const slateRef = React.useRef<Editor>(null)
 
-  const [langId, setLangId, resetLangId] = useAutosavedState<number>(initialData.languageId, {
+  const [lang, setLang, resetLang] = useAutosavedState<LanguageType>(initialData.language, {
     initialTimestamp: initialData.timestamp,
     key: `${autosaveKey}:langId`,
     debounceTime: 1000,
@@ -92,7 +94,17 @@ const PostEditor: React.FC<PostEditorProps> = ({
     debounceTime: 1000,
   })
 
-  const { languages = [] } = currentUser || {}
+  let { languages = [] } = currentUser || {}
+  const missingInitialLanguage = !languages.some(
+    ({language}) => language.id === initialData.language.id
+  )
+  if (missingInitialLanguage && initialData.language.id != -1) {
+    languages = [...languages, {
+      level: LanguageLevel.Beginner,
+      id: -1,
+      language: initialData.language
+    }]
+  }
   const userLanguages = languages.map(({ language }) => {
     const value = language.id.toString()
     const displayName = languageNameWithDialect(language)
@@ -111,12 +123,12 @@ const PostEditor: React.FC<PostEditorProps> = ({
   const addTopic = (id: number) => setSelectedTopics([...selectedTopics, id])
   const removeTopic = (id: number) => setSelectedTopics(selectedTopics.filter((tid) => tid !== id))
 
-  const postLanguage = languages.find(({ language }) => language.id === langId)?.language
+  const postLanguage = languages.find(({ language }) => language.id === lang.id)?.language
   const postTopics = topics.filter(({ id }) => selectedTopics.indexOf(id) > -1)
 
   const resetIntialPostValues = React.useCallback(() => {
     setTitle(initialData.title)
-    setLangId(initialData.languageId)
+    setLang(initialData.language)
     setBody(initialData.body)
     setSelectedTopics(initialData.topicIds)
   }, [initialData])
@@ -137,7 +149,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
       resetTitle()
       resetBody()
       resetImage()
-      resetLangId()
+      resetLang()
     }
 
     const returnImage = !image ? {
@@ -153,11 +165,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
       body,
       clear,
       headlineImage: returnImage,
-      languageId: langId,
+      language: lang,
       topicIds: selectedTopics,
       resetIntialPostValues,
     }
-  }, [title, langId, image, body, selectedTopics])
+  }, [title, lang, image, body, selectedTopics])
 
   return (
     <div className="post-editor">
@@ -182,8 +194,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
       <Select
         id="language"
         options={userLanguages}
-        value={langId ? langId.toString() : ''}
-        onChange={(value) => setLangId(parseInt(value, 10))}
+        value={lang.id ? lang.id.toString() : ''} 
+        /* TODO: fixme */
+        onChange={(value) => setLang({id: parseInt(value, 10), name: 'English', dialect: ''})}
         placeholder={
           userLanguages.length > 0
             ? t('languageSelectPlaceholder')

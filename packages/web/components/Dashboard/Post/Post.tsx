@@ -545,6 +545,7 @@ const Post = ({ post, currentUser, refetch }: IPostProps) => {
     updatePost({
       variables: {
         postId: post.id,
+        level: post.publishedLanguageLevel,
         status,
         // headlineImage is required now but the resolver will see it hasn't changed and do nothing
         headlineImage: {

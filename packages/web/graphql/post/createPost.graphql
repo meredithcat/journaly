@@ -2,6 +2,7 @@ mutation createPost(
   $title: String!
   $body: [EditorNode!]!
   $languageId: Int!
+  $level: LanguageLevel!
   $topicIds: [Int!]
   $status: PostStatus!
   $headlineImage: HeadlineImageInput!
@@ -10,6 +11,7 @@ mutation createPost(
     title: $title
     body: $body
     languageId: $languageId
+    level: $level
     topicIds: $topicIds
     status: $status
     headlineImage: $headlineImage

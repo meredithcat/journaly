@@ -23,7 +23,6 @@ import {
   PostStatus,
   BadgeType,
   PrismaClient,
-  LanguageRelation,
   UserRole,
 } from '@journaly/j-db-client'
 import { EditorNode, HeadlineImageInput } from './inputTypes'
@@ -373,6 +372,7 @@ const PostMutations = extendType({
         title: stringArg({ required: true }),
         body: EditorNode.asArg({ list: true, required: true }),
         languageId: intArg({ required: true }),
+        level: arg({ type: 'LanguageLevel', required: true }),
         topicIds: intArg({ list: true, required: false }),
         status: arg({ type: 'PostStatus', required: true }),
         headlineImage: HeadlineImageInput.asArg({ required: true }),
@@ -397,7 +397,7 @@ const PostMutations = extendType({
 
         if (!user) throw new Error("User not found")
 
-        const userLanguageLevel = user.languages.filter((language: LanguageRelation) => language.languageId === languageId)[0].level
+        // const userLanguageLevel = user.languages.filter((language: LanguageRelation) => language.languageId === languageId)[0].level
 
         const post = await ctx.db.post.create({
           data: {
@@ -407,7 +407,7 @@ const PostMutations = extendType({
             status,
             publishedAt: isPublished ? new Date() : null,
             bumpedAt: isPublished ? new Date() : null,
-            publishedLanguageLevel: userLanguageLevel,
+            publishedLanguageLevel: args.level,
             postCommentSubscriptions: {
               create: [
                 {
@@ -449,6 +449,7 @@ const PostMutations = extendType({
         postId: intArg({ required: true }),
         title: stringArg({ required: false }),
         languageId: intArg({ required: false }),
+        level: arg({ type: 'LanguageLevel', required: true }),
         topicIds: intArg({ list: true, required: false }),
         body: EditorNode.asArg({ list: true, required: false }),
         status: arg({ type: 'PostStatus', required: false }),
@@ -538,10 +539,8 @@ const PostMutations = extendType({
           }
         }
 
-        const languageId = args.languageId  || originalPost.languageId
-        const userLanguageLevel = currentUser.languages.filter((language: LanguageRelation) => language.languageId === languageId)[0].level
-        data.publishedLanguageLevel = userLanguageLevel
-        
+        data.publishedLanguageLevel = args.level
+
         if (args.status === 'PUBLISHED' && !originalPost.publishedAt) {
           data.publishedAt = new Date()
           data.bumpedAt = new Date()
@@ -767,58 +766,58 @@ const PostMutations = extendType({
         }
       }
     }),
-    t.field('bumpPost', {
-      type: 'Post',
-      args: {
-        postId: intArg({ required: true }),
-      },
-      resolve: async (_parent, args, ctx) => {
-        const { userId } = ctx.request
-        if (!userId) throw new NotAuthorizedError()
+      t.field('bumpPost', {
+        type: 'Post',
+        args: {
+          postId: intArg({ required: true }),
+        },
+        resolve: async (_parent, args, ctx) => {
+          const { userId } = ctx.request
+          if (!userId) throw new NotAuthorizedError()
 
-        const [currentUser, post] = await Promise.all([
-          ctx.db.user.findUnique({
-            where: {
-              id: userId,
-            },
-            include: {
-              membershipSubscription: true,
-            }
-          }),
-          ctx.db.post.findUnique({
+          const [currentUser, post] = await Promise.all([
+            ctx.db.user.findUnique({
+              where: {
+                id: userId,
+              },
+              include: {
+                membershipSubscription: true,
+              }
+            }),
+            ctx.db.post.findUnique({
+              where: {
+                id: args.postId,
+              },
+            }),
+          ])
+
+          if (!currentUser) throw new NotFoundError('User')
+          if (!post) throw new NotFoundError('Post')
+
+          hasAuthorPermissions(post, currentUser)
+
+          const canBump = (currentUser.membershipSubscription && currentUser.membershipSubscription.expiresAt > new Date())
+            || currentUser.userRole === UserRole.ADMIN || currentUser.userRole === UserRole.MODERATOR
+
+          if (!canBump) {
+            throw new Error("Only Journaly Premium members can access this feature")
+          }
+
+          if (post.bumpCount >= POST_BUMP_LIMIT) {
+            throw new Error("You've already reached your limit for bumping this post")
+          }
+
+          return ctx.db.post.update({
             where: {
               id: args.postId,
             },
-          }),
-        ])
-
-        if (!currentUser) throw new NotFoundError('User')
-        if (!post) throw new NotFoundError('Post')
-
-        hasAuthorPermissions(post, currentUser)
-
-        const canBump = (currentUser.membershipSubscription && currentUser.membershipSubscription.expiresAt > new Date())
-          || currentUser.userRole === UserRole.ADMIN || currentUser.userRole === UserRole.MODERATOR
-
-        if (!canBump) {
-          throw new Error("Only Journaly Premium members can access this feature")
+            data: {
+              bumpedAt: new Date(),
+              bumpCount: post.bumpCount + 1,
+            },
+          })
         }
-
-        if (post.bumpCount >= POST_BUMP_LIMIT) {
-          throw new Error("You've already reached your limit for bumping this post")
-        }
-
-        return ctx.db.post.update({
-          where: {
-            id: args.postId,
-          },
-          data: {
-            bumpedAt: new Date(),
-            bumpCount: post.bumpCount + 1,
-          },
-        })
-      }
-    })
+      })
   },
 })
 

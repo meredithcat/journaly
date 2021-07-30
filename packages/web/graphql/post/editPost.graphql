@@ -8,6 +8,8 @@ query editPost($id: Int!, $uiLanguage: UILanguage!) {
     }
     language {
       id
+      name
+      dialect
     }
     headlineImage {
       id

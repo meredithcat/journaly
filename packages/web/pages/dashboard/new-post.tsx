@@ -20,6 +20,7 @@ import {
   PostsQuery,
   PostsQueryVariables,
   PostsDocument,
+  LanguageLevel,
 } from '@/generated/graphql'
 import AuthGate from '@/components/AuthGate'
 import { useTranslation } from '@/config/i18n'
@@ -65,7 +66,7 @@ const NewPostPage: NextPage<NewPostPageProps> = ({ defaultImage }) => {
   const initialData: InputPostData = useMemo(() => (
     {
       title: '',
-      languageId: -1,
+      language: { id: -1, name: '', dialect: '' },
       topicIds: [],
       headlineImage: defaultImage,
       body: [
@@ -128,7 +129,7 @@ const NewPostPage: NextPage<NewPostPageProps> = ({ defaultImage }) => {
       return
     }
 
-    const { title, languageId, topicIds, headlineImage, body } = dataRef.current
+    const { title, language: { id: languageId }, topicIds, headlineImage, body } = dataRef.current
 
     try {
       const modifiedBody = await uploadInlineImages(body)
@@ -137,6 +138,7 @@ const NewPostPage: NextPage<NewPostPageProps> = ({ defaultImage }) => {
           title,
           status,
           languageId,
+          level: LanguageLevel.Beginner,
           topicIds,
           headlineImage,
           body: modifiedBody

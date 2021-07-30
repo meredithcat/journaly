@@ -13,7 +13,11 @@ import PostEditor, {
 } from '@/components/PostEditor'
 import theme from '@/theme'
 import Button, { ButtonVariant } from '@/components/Button'
-import { useEditPostQuery, useUpdatePostMutation } from '@/generated/graphql'
+import { 
+  useEditPostQuery, 
+  useUpdatePostMutation,
+  LanguageLevel,
+} from '@/generated/graphql'
 import AuthGate from '@/components/AuthGate'
 import ConfirmationModal from '@/components/Modals/ConfirmationModal'
 import useUILanguage from '@/hooks/useUILanguage'
@@ -60,7 +64,7 @@ const EditPostPage: NextPage = () => {
       const {
         title,
         bodySrc,
-        language: { id: languageId },
+        language,
         headlineImage,
         postTopics,
         updatedAt,
@@ -70,7 +74,7 @@ const EditPostPage: NextPage = () => {
         body: JSON.parse(bodySrc) as Descendant[],
         topicIds: postTopics.map((x) => x.topic.id),
         title,
-        languageId,
+        language,
         headlineImage,
         timestamp: Date.parse(updatedAt),
       })
@@ -91,7 +95,7 @@ const EditPostPage: NextPage = () => {
       return
     }
 
-    const { title, languageId, topicIds, headlineImage, body, clear } = dataRef.current
+    const { title, language, topicIds, headlineImage, body, clear } = dataRef.current
 
     let postId: number
     try {
@@ -102,7 +106,8 @@ const EditPostPage: NextPage = () => {
           postId: id,
           body: modifiedBody,
           title,
-          languageId,
+          languageId: language.id,
+          level: LanguageLevel.Beginner,
           topicIds,
           headlineImage,
         },

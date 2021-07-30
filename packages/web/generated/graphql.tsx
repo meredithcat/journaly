@@ -443,6 +443,7 @@ export type MutationCreatePostArgs = {
   title: Scalars['String']
   body: Array<EditorNode>
   languageId: Scalars['Int']
+  level: LanguageLevel
   topicIds?: Maybe<Array<Scalars['Int']>>
   status: PostStatus
   headlineImage: HeadlineImageInput
@@ -452,6 +453,7 @@ export type MutationUpdatePostArgs = {
   postId: Scalars['Int']
   title?: Maybe<Scalars['String']>
   languageId?: Maybe<Scalars['Int']>
+  level: LanguageLevel
   topicIds?: Maybe<Array<Scalars['Int']>>
   body?: Maybe<Array<EditorNode>>
   status?: Maybe<PostStatus>
@@ -955,6 +957,7 @@ export type CreatePostMutationVariables = Exact<{
   title: Scalars['String']
   body: Array<EditorNode> | EditorNode
   languageId: Scalars['Int']
+  level: LanguageLevel
   topicIds?: Maybe<Array<Scalars['Int']> | Scalars['Int']>
   status: PostStatus
   headlineImage: HeadlineImageInput
@@ -980,7 +983,7 @@ export type EditPostQueryVariables = Exact<{
 export type EditPostQuery = { __typename?: 'Query' } & {
   postById: { __typename?: 'Post' } & Pick<Post, 'title' | 'bodySrc' | 'updatedAt'> & {
       author: { __typename?: 'User' } & Pick<User, 'id'>
-      language: { __typename?: 'Language' } & Pick<Language, 'id'>
+      language: { __typename?: 'Language' } & Pick<Language, 'id' | 'name' | 'dialect'>
       headlineImage: { __typename?: 'HeadlineImage' } & Pick<
         HeadlineImage,
         'id' | 'largeSize' | 'smallSize'
@@ -1057,6 +1060,7 @@ export type UpdatePostMutationVariables = Exact<{
   postId: Scalars['Int']
   title?: Maybe<Scalars['String']>
   languageId?: Maybe<Scalars['Int']>
+  level: LanguageLevel
   topicIds?: Maybe<Array<Scalars['Int']> | Scalars['Int']>
   body?: Maybe<Array<EditorNode> | EditorNode>
   status?: Maybe<PostStatus>
@@ -2669,6 +2673,7 @@ export const CreatePostDocument = gql`
     $title: String!
     $body: [EditorNode!]!
     $languageId: Int!
+    $level: LanguageLevel!
     $topicIds: [Int!]
     $status: PostStatus!
     $headlineImage: HeadlineImageInput!
@@ -2677,6 +2682,7 @@ export const CreatePostDocument = gql`
       title: $title
       body: $body
       languageId: $languageId
+      level: $level
       topicIds: $topicIds
       status: $status
       headlineImage: $headlineImage
@@ -2707,6 +2713,7 @@ export type CreatePostMutationFn = ApolloReactCommon.MutationFunction<
  *      title: // value for 'title'
  *      body: // value for 'body'
  *      languageId: // value for 'languageId'
+ *      level: // value for 'level'
  *      topicIds: // value for 'topicIds'
  *      status: // value for 'status'
  *      headlineImage: // value for 'headlineImage'
@@ -2787,6 +2794,8 @@ export const EditPostDocument = gql`
       }
       language {
         id
+        name
+        dialect
       }
       headlineImage {
         id
@@ -3148,6 +3157,7 @@ export const UpdatePostDocument = gql`
     $postId: Int!
     $title: String
     $languageId: Int
+    $level: LanguageLevel!
     $topicIds: [Int!]
     $body: [EditorNode!]
     $status: PostStatus
@@ -3158,6 +3168,7 @@ export const UpdatePostDocument = gql`
       body: $body
       title: $title
       languageId: $languageId
+      level: $level
       status: $status
       headlineImage: $headlineImage
       topicIds: $topicIds
@@ -3188,6 +3199,7 @@ export type UpdatePostMutationFn = ApolloReactCommon.MutationFunction<
  *      postId: // value for 'postId'
  *      title: // value for 'title'
  *      languageId: // value for 'languageId'
+ *      level: // value for 'level'
  *      topicIds: // value for 'topicIds'
  *      body: // value for 'body'
  *      status: // value for 'status'
