@@ -16,7 +16,6 @@ import Button, { ButtonVariant } from '@/components/Button'
 import { 
   useEditPostQuery, 
   useUpdatePostMutation,
-  LanguageLevel,
 } from '@/generated/graphql'
 import AuthGate from '@/components/AuthGate'
 import ConfirmationModal from '@/components/Modals/ConfirmationModal'
@@ -86,6 +85,12 @@ const EditPostPage: NextPage = () => {
       return
     }
 
+    // TODO: remove this check
+    if (!currentUser) {
+      console.log('no user')
+      return
+    }
+
     setSaving(true)
 
     const [valid, message] = validatePostData(dataRef.current, t)
@@ -97,6 +102,12 @@ const EditPostPage: NextPage = () => {
 
     const { title, language, topicIds, headlineImage, body, clear } = dataRef.current
 
+    console.log(currentUser.languages)
+    console.log(dataRef.current)
+    const languageId = dataRef.current.language.id
+    const languageLevel = currentUser.languages.find(
+      (language) => language.language.id === languageId).level
+
     let postId: number
     try {
       const modifiedBody = await uploadInlineImages(body)
@@ -107,7 +118,7 @@ const EditPostPage: NextPage = () => {
           body: modifiedBody,
           title,
           languageId: language.id,
-          level: LanguageLevel.Beginner,
+          level: languageLevel,
           topicIds,
           headlineImage,
         },

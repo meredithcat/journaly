@@ -194,9 +194,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
       <Select
         id="language"
         options={userLanguages}
-        value={lang.id ? lang.id.toString() : ''} 
-        /* TODO: fixme */
-        onChange={(value) => setLang({id: parseInt(value, 10), name: 'English', dialect: ''})}
+        value={lang.id ? lang.id.toString() : ''}
+        onChange={(value) => setLang({id: parseInt(value, 10), name: '', dialect: ''})}
         placeholder={
           userLanguages.length > 0
             ? t('languageSelectPlaceholder')

@@ -397,8 +397,6 @@ const PostMutations = extendType({
 
         if (!user) throw new Error("User not found")
 
-        // const userLanguageLevel = user.languages.filter((language: LanguageRelation) => language.languageId === languageId)[0].level
-
         const post = await ctx.db.post.create({
           data: {
             language: { connect: { id: languageId } },

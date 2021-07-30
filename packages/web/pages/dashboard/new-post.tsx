@@ -120,6 +120,12 @@ const NewPostPage: NextPage<NewPostPageProps> = ({ defaultImage }) => {
     if (!(dataRef.current)) {
       return
     }
+    
+    // TODO: remove this check
+    if (!currentUser) {
+      console.log('no user')
+      return
+    }
     setSaving(true)
 
     const [valid, message] = validatePostData(dataRef.current, t)
@@ -131,6 +137,10 @@ const NewPostPage: NextPage<NewPostPageProps> = ({ defaultImage }) => {
 
     const { title, language: { id: languageId }, topicIds, headlineImage, body } = dataRef.current
 
+    console.log(currentUser.languages)
+    const languageLevel = currentUser.languages.find(
+      (language) => language.language.id === languageId).level
+
     try {
       const modifiedBody = await uploadInlineImages(body)
       createPost({
@@ -138,7 +148,7 @@ const NewPostPage: NextPage<NewPostPageProps> = ({ defaultImage }) => {
           title,
           status,
           languageId,
-          level: LanguageLevel.Beginner,
+          level: languageLevel,
           topicIds,
           headlineImage,
           body: modifiedBody
